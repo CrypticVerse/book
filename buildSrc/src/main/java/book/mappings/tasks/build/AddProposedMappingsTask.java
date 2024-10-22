@@ -93,9 +93,6 @@ public abstract class AddProposedMappingsTask extends DefaultMappingsTask implem
     public static void addProposedMappings(
             Path input, Path output, Path preprocessedMappings, Path processedMappings, Path jar, EnigmaProfile profile
     ) throws Exception {
-        // final String name = output.getFileName().toString();
-        // final Path preprocessedMappings = tempDir.resolve(name.replace(".tiny", "-preprocessed.tiny"));
-        // final Path processedMappings = tempDir.resolve(name.replace(".tiny", "-processed.tiny"));
 
         final List<String> namespaces;
         try (Reader reader = Files.newBufferedReader(input, StandardCharsets.UTF_8)) {
@@ -106,11 +103,8 @@ public abstract class AddProposedMappingsTask extends DefaultMappingsTask implem
             throw new IllegalArgumentException("Input mappings must contain the named namespace");
         }
 
-        // if (!Files.exists(tempDir)) {
-        //     Files.createDirectories(tempDir);
-        // }
-        Files.createDirectories(preprocessedMappings);
-        Files.createDirectories(processedMappings);
+        Files.createDirectories(preprocessedMappings.getParent());
+        Files.createDirectories(processedMappings.getParent());
 
         final boolean extraProcessing = preprocessFile(input, preprocessedMappings);
         final Path commandInput = extraProcessing ? preprocessedMappings : input;

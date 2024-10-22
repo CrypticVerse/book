@@ -1,15 +1,13 @@
 package book.mappings.tasks.build;
 
-import static book.mappings.util.ProviderUtil.exists;
+import book.mappings.tasks.setup.IntermediaryDependantTask;
 
 import javax.inject.Inject;
 
-public abstract class IntermediaryMappingsV2JarTask extends MappingsV2JarTask {
+public abstract class IntermediaryMappingsV2JarTask extends MappingsV2JarTask implements IntermediaryDependantTask {
 
     @Inject
     public IntermediaryMappingsV2JarTask(String unpickVersion) {
         super(unpickVersion);
-
-        this.onlyIf(unused -> exists(this.getMappings()));
     }
 }

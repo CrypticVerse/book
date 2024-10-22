@@ -5,17 +5,16 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 
-import org.gradle.api.Project;
-
 import book.mappings.decompile.javadoc.ClassJavadocProvider;
 import book.mappings.decompile.javadoc.FieldJavadocProvider;
 import book.mappings.decompile.javadoc.MethodJavadocProvider;
+import org.gradle.api.logging.Logger;
 
 public abstract class AbstractDecompiler {
-    private final Project project;
+    private final Logger logger;
 
-    public AbstractDecompiler(Project project) {
-        this.project = project;
+    public AbstractDecompiler(Logger logger) {
+        this.logger = logger;
     }
 
     public void decompile(Collection<Path> sources, Path outputDir, Map<String, Object> options, Collection<File> libraries) {
@@ -24,8 +23,8 @@ public abstract class AbstractDecompiler {
 
     public abstract void decompile(Collection<File> sources, File outputDir, Map<String, Object> options, Collection<File> libraries);
 
-    protected Project getProject() {
-        return this.project;
+    protected Logger getLogger() {
+        return this.logger;
     }
 
     public void withClassJavadocProvider(ClassJavadocProvider javadocProvider) {

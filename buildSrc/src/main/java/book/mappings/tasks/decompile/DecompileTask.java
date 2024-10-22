@@ -11,7 +11,6 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -76,7 +75,7 @@ public abstract class DecompileTask extends DefaultMappingsTask {
 
     @TaskAction
     public void decompile() throws IOException {
-        final AbstractDecompiler decompiler = this.getAbstractDecompiler();
+        final AbstractDecompiler decompiler = this.getDecompiler().get().create(this.getLogger());
 
         toOptional(this.getClassJavadocSource())
                 .ifPresent(decompiler::withClassJavadocProvider);
@@ -95,10 +94,5 @@ public abstract class DecompileTask extends DefaultMappingsTask {
                 this.getDecompilerOptions().map(HashMap::new).getOrElse(new HashMap<>()),
                 this.getLibraries().getFiles()
         );
-    }
-
-    @Internal
-    public AbstractDecompiler getAbstractDecompiler() {
-        return this.getDecompiler().get().getProvider().provide(this.getProject());
     }
 }

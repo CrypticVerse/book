@@ -1,12 +1,11 @@
 package book.mappings.tasks.build;
 
-import static book.mappings.util.ProviderUtil.exists;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 
+import book.mappings.tasks.setup.IntermediaryDependantTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
@@ -25,7 +24,7 @@ import net.fabricmc.mappingio.format.MappingFormat;
 import net.fabricmc.mappingio.format.tiny.Tiny2FileWriter;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
 
-public abstract class RemoveIntermediaryTask extends DefaultMappingsTask {
+public abstract class RemoveIntermediaryTask extends DefaultMappingsTask implements IntermediaryDependantTask {
     public static final String TASK_NAME = "removeIntermediary";
 
     @InputFile
@@ -36,8 +35,6 @@ public abstract class RemoveIntermediaryTask extends DefaultMappingsTask {
 
     public RemoveIntermediaryTask() {
         super(Constants.Groups.BUILD_MAPPINGS);
-
-        this.onlyIf(unused -> exists(this.getInput()));
     }
 
     @TaskAction
