@@ -3,11 +3,10 @@ package book.mappings.tasks.build;
 import java.io.IOException;
 import java.util.Map;
 
-import book.mappings.tasks.decompile.DecompileTask;
+import book.mappings.tasks.decompile.DecompileVineflowerTask;
+import org.gradle.api.tasks.TaskAction;
 
-import org.apache.commons.io.FileUtils;
-
-public abstract class GenFakeSourceTask extends DecompileTask {
+public abstract class GenFakeSourceTask extends DecompileVineflowerTask {
     public static final String TASK_NAME = "genFakeSource";
 
     public GenFakeSourceTask() {
@@ -19,9 +18,8 @@ public abstract class GenFakeSourceTask extends DecompileTask {
     }
 
     @Override
+    @TaskAction
     public void decompile() throws IOException {
-        FileUtils.deleteDirectory(this.getOutput().get().getAsFile());
-
         super.decompile();
 
         this.getLogger().lifecycle(":Fake source generated");

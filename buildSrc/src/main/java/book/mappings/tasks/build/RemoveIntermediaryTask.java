@@ -9,7 +9,6 @@ import java.util.Collections;
 
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
@@ -29,7 +28,6 @@ import net.fabricmc.mappingio.tree.MemoryMappingTree;
 public abstract class RemoveIntermediaryTask extends DefaultMappingsTask {
     public static final String TASK_NAME = "removeIntermediary";
 
-    @Optional
     @InputFile
     public abstract RegularFileProperty getInput();
 

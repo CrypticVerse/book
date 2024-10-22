@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.gradle.api.GradleException;
-import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
@@ -27,15 +26,7 @@ public abstract class BookMappingsExtension {
 
     public abstract RegularFileProperty getUnpickMeta();
 
-    private final FileConstants fileConstants;
-
-    public static BookMappingsExtension get(Project project) {
-        return project.getExtensions().getByType(BookMappingsExtension.class);
-    }
-
-    public BookMappingsExtension(Project project) {
-        this.fileConstants = new FileConstants(project);
-
+    public BookMappingsExtension() {
         this.enigmaProfile = this.getEnigmaProfileConfig()
                 .map(RegularFile::getAsFile)
                 .map(File::toPath)
@@ -46,9 +37,5 @@ public abstract class BookMappingsExtension {
                         throw new GradleException("Failed to read enigma profile", e);
                     }
                 });
-    }
-
-    public FileConstants getFileConstants() {
-        return this.fileConstants;
     }
 }

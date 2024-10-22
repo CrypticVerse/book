@@ -4,11 +4,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Optional;
 import org.gradle.jvm.tasks.Jar;
 
 import book.mappings.Constants;
@@ -25,7 +22,6 @@ public abstract class MappingsV2JarTask extends Jar implements MappingsTask {
     @InputFile
     public abstract RegularFileProperty getUnpickDefinition();
 
-    @Optional
     @InputFile
     public abstract RegularFileProperty getMappings();
 
@@ -40,9 +36,7 @@ public abstract class MappingsV2JarTask extends Jar implements MappingsTask {
 
         this.unpickVersion = unpickVersion;
 
-        final Provider<RegularFile> unpickMeta = this.getUnpickMeta();
-
-        this.from(unpickMeta, copySpec -> {
+        this.from(this.getUnpickMeta(), copySpec -> {
             copySpec.expand(Map.of("version", this.unpickVersion));
             copySpec.rename(unused -> JAR_UNPICK_META_PATH);
         });

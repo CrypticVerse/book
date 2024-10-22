@@ -21,7 +21,7 @@ public class Constants {
         public static final String SETUP = "jar setup";
         public static final String MAPPINGS = MAPPINGS_NAME;
         public static final String BUILD_MAPPINGS = "build mappings";
-        public static final String MAP_JAR_ = "jar mapping";
+        public static final String MAP_JAR = "jar mapping";
         public static final String DECOMPILE = "decompile";
         public static final String UNPICK = "unpick";
         public static final String LINT = "lint";

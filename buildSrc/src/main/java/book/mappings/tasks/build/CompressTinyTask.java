@@ -16,11 +16,11 @@ import book.mappings.tasks.DefaultMappingsTask;
 public abstract class CompressTinyTask extends DefaultMappingsTask {
     public static final String TASK_NAME = "compressTiny";
 
-    @OutputFile
-    public abstract RegularFileProperty getCompressedTiny();
-
     @InputFile
     public abstract RegularFileProperty getMappings();
+
+    @OutputFile
+    public abstract RegularFileProperty getCompressedTiny();
 
     public CompressTinyTask() {
         super(Constants.Groups.BUILD_MAPPINGS);

@@ -8,11 +8,11 @@ public abstract class EraseByteCodeTask extends TransformJarClassesTask {
     public static final String TASK_NAME = "eraseBytecode";
 
     public EraseByteCodeTask() {
-        this.visitor(DraftsmanAdapterClassVisitor::new);
+        this.getVisitorFactories().add(DraftsmanAdapterClassVisitor::new);
 
-        this.visitor(PublicClassVisitor::new);
+        this.getVisitorFactories().add(PublicClassVisitor::new);
 
-        this.filter(classNode -> classNode.outerClass == null);
+        this.getFilters().add(classNode -> classNode.outerClass == null);
     }
 
     private static class PublicClassVisitor extends ClassVisitor {

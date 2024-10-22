@@ -104,10 +104,6 @@ dependencies {
 	intermediary "net.fabricmc:intermediary:${minecraft_version}:v2"
 }
 
-clean.doFirst {
-	delete bookMappings.fileConstants.tempDir
-}
-
 tasks.build.dependsOn "compressTiny", "tinyJar", "v2UnmergedMappingsJar", "v2MergedMappingsJar"
 
 java {

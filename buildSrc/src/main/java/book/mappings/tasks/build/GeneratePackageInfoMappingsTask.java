@@ -9,10 +9,10 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.commons.io.FileUtils;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
@@ -33,7 +33,47 @@ import org.objectweb.asm.tree.ClassNode;
 public abstract class GeneratePackageInfoMappingsTask extends DefaultMappingsTask implements MappingsDirOutputtingTask {
     public static final String TASK_NAME = "generatePackageInfoMappings";
 
-    private static void processEntry(String name, InputStream inputStream, String packageName, Path outputDir) throws IOException {
+    @Input
+    public abstract Property<String> getPackageName();
+
+    @InputFile
+    public abstract RegularFileProperty getInputJar();
+
+    @OutputDirectory
+    protected abstract DirectoryProperty getOutputDir();
+
+    public GeneratePackageInfoMappingsTask() {
+        super(Constants.Groups.BUILD_MAPPINGS);
+
+        this.getOutputDir().convention(this.getMappingsDir().zip(this.getPackageName(), Directory::dir));
+    }
+
+    @TaskAction
+    public void generate() throws IOException {
+        final File inputJar = this.getInputJar().get().getAsFile();
+
+        this.getLogger().lifecycle("Scanning {} for package-info classes", inputJar);
+
+        final File outputDir = this.getOutputDir().get().getAsFile();
+
+        FileUtils.deleteDirectory(outputDir);
+
+        try (ZipFile zipFile = new ZipFile(inputJar)) {
+            final List<? extends ZipEntry> entries = Collections.list(zipFile.entries());
+
+            for (final ZipEntry entry : entries) {
+                if (entry.getName().endsWith(".class")) {
+                    try (InputStream stream = zipFile.getInputStream(entry)) {
+                        processEntry(entry.getName(), stream, this.getPackageName().get(), outputDir.toPath());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void processEntry(
+            String name, InputStream inputStream, String packageName, Path outputDir
+    ) throws IOException {
         name = name.replace(".class", "");
 
         if (name.contains("$")) {
@@ -62,7 +102,8 @@ public abstract class GeneratePackageInfoMappingsTask extends DefaultMappingsTas
         String packageInfoId = name.substring(name.lastIndexOf("_") + 1);
 
         if (Character.isLowerCase(packageInfoId.charAt(0))) {
-            packageInfoId = packageInfoId.substring(0, 1).toUpperCase(Locale.ROOT) + packageInfoId.substring(1);
+            packageInfoId = packageInfoId.substring(0, 1).toUpperCase(Locale.ROOT) +
+                    packageInfoId.substring(1);
         }
 
         final String className = "PackageInfo" + packageInfoId;
@@ -77,62 +118,6 @@ public abstract class GeneratePackageInfoMappingsTask extends DefaultMappingsTas
             writer.printf("CLASS %s %s", name, fullName);
             // println is platform-dependent and may produce CRLF.
             writer.print('\n');
-        }
-    }
-
-    // TODO this should not be separate from outputDir
-    // private final File mappings = this.getProject().file("mappings");
-    // TODO this should be an input
-    // private final File inputJar = this.fileConstants.perVersionMappingsJar;
-
-    @InputFile
-    public abstract RegularFileProperty getInputJar();
-
-    @Input
-    public abstract Property<String> getPackageName();
-
-    // TODO this should be an output mapped from mappings
-    // private Path getOutputDir() {
-    //     return this.mappings.toPath().resolve(this.getPackageName().get());
-    // }
-
-    @OutputDirectory
-    protected abstract DirectoryProperty getOutputDir();
-
-    public GeneratePackageInfoMappingsTask() {
-        super(Constants.Groups.BUILD_MAPPINGS);
-
-        this.getOutputDir().convention(this.getMappingsDir().zip(this.getPackageName(), Directory::dir));
-    }
-
-    @TaskAction
-    public void generate() throws IOException {
-        final File inputJar = this.getInputJar().get().getAsFile();
-
-        this.getLogger().lifecycle("Scanning {} for package-info classes", inputJar);
-
-        final Path outputDir = this.getOutputDir().get().getAsFile().toPath();
-        if (Files.exists(outputDir)) {
-            try (Stream<Path> filePaths = Files.walk(outputDir).filter(Files::isRegularFile)) {
-                final List<Path> contents = filePaths.toList();
-                for (int i = contents.size() - 1; i >= 0; i--) {
-                    Files.delete(contents.get(i));
-                }
-
-                Files.delete(outputDir);
-            }
-        }
-
-        try (ZipFile zipFile = new ZipFile(inputJar)) {
-            final List<? extends ZipEntry> entries = Collections.list(zipFile.entries());
-
-            for (final ZipEntry entry : entries) {
-                if (entry.getName().endsWith(".class")) {
-                    try (InputStream stream = zipFile.getInputStream(entry)) {
-                        processEntry(entry.getName(), stream, this.getPackageName().get(), outputDir);
-                    }
-                }
-            }
         }
     }
 }

@@ -53,14 +53,6 @@
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
 
-        <module name="ImportOrder">
-            <property name="groups" value="java,javax,org.gradle,org.jetbrains,net.minecraft,book.mappings,*"/>
-            <property name="ordered" value="false"/><!-- the plugin orders alphabetically without considering separators.. -->
-            <property name="separated" value="true"/>
-            <property name="option" value="top"/>
-            <property name="sortStaticImportsAlphabetically" value="true"/>
-        </module>
-
         <!-- Ensures braces are at the end of a line -->
         <module name="LeftCurly"/>
         <module name="RightCurly"/>

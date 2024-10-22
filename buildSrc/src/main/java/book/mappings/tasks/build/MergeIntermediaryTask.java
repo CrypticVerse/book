@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Optional;
 
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -21,11 +20,6 @@ import net.fabricmc.mappingio.adapter.MappingDstNsReorder;
 
 public abstract class MergeIntermediaryTask extends AbstractTinyMergeTask {
     public static final String TASK_NAME = "mergeIntermediary";
-
-    @Override
-    @Optional
-    @InputFile
-    public abstract RegularFileProperty getInput();
 
     @InputFile
     public abstract RegularFileProperty getMergedTinyMappings();
@@ -40,13 +34,28 @@ public abstract class MergeIntermediaryTask extends AbstractTinyMergeTask {
     }
 
     @Override
-    public void mergeMappings() throws Exception {
+    public void mergeMappings() throws IOException {
         this.mergeMappings(this.getMergedTinyMappings().get().getAsFile());
     }
 
     @Override
     protected MappingVisitor getFirstVisitor(MappingVisitor next) {
         return firstVisitor(next);
+    }
+
+    @Override
+    protected MappingVisitor getPreWriteVisitor(MappingVisitor writer) {
+        return preWriteVisitor(writer);
+    }
+
+    @VisibleForTesting
+    public static void mergeMappings(
+            Path intermediaryMappings, Path mergeTinyV2Output, Path outputMappings
+    ) throws IOException {
+        AbstractTinyMergeTask.mergeMappings(intermediaryMappings, mergeTinyV2Output, outputMappings,
+                MergeIntermediaryTask::firstVisitor,
+                MergeIntermediaryTask::preWriteVisitor
+        );
     }
 
     private static MappingVisitor firstVisitor(MappingVisitor next) {
@@ -68,22 +77,11 @@ public abstract class MergeIntermediaryTask extends AbstractTinyMergeTask {
         );
     }
 
-    @Override
-    protected MappingVisitor getPreWriteVisitor(MappingVisitor writer) {
-        return preWriteVisitor(writer);
-    }
-
     private static MappingVisitor preWriteVisitor(MappingVisitor writer) {
-        return new MappingDstNsReorder(writer, List.of("intermediary", "named")); // Remove hashed namespace
-    }
-
-    @VisibleForTesting
-    public static void mergeMappings(
-            Path intermediaryMappings, Path mergeTinyV2Output, Path outputMappings
-    ) throws IOException {
-        AbstractTinyMergeTask.mergeMappings(intermediaryMappings, mergeTinyV2Output, outputMappings,
-                MergeIntermediaryTask::firstVisitor,
-                MergeIntermediaryTask::preWriteVisitor
+        return new MappingDstNsReorder(
+                writer,
+                // Remove hashed namespace
+                List.of("intermediary", "named")
         );
     }
 }

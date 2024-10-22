@@ -29,19 +29,17 @@ public abstract class DownloadTargetMappingJarTask extends DefaultMappingsTask i
 
         // TODO eliminate project access in task action
         final File targetMappingsJar = this.getTargetJar().get().getAsFile();
+
+        final String urlPrefix = "https://maven.bookkeepersmc.com/com/bookkeepersmc/book-mappings/" +
+                targetVersion + "/book-mappings-" + targetVersion;
+
         this.startDownload()
-                .src(
-                        "https://bookkeepersmc.github.io/m2/com/bookkeepersmc/book-mappings/" + targetVersion +
-                                "/book-mappings-" + targetVersion + "-v2.jar"
-                )
+                .src(urlPrefix + "-v2.jar")
                 .dest(targetMappingsJar)
                 .download();
 
         this.startDownload()
-                .src(
-                        "https://bookkeepersmc.github.io/m2/com/bookkeepersmc/book-mappings/" + targetVersion +
-                                "/book-mappings-" + targetVersion + "-constants.jar"
-                )
+                .src(urlPrefix + "-constants.jar")
                 .dest(this.getTargetUnpickConstantsFile().get().getAsFile())
                 .download();
     }
