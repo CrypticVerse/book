@@ -3,13 +3,15 @@ package book.mappings.tasks.diff;
 import java.io.File;
 import java.io.IOException;
 
+import book.mappings.Constants;
+import book.mappings.tasks.DownloadTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 import book.mappings.tasks.DefaultMappingsTask;
 
-public abstract class DownloadTargetMappingJarTask extends DefaultMappingsTask implements TargetVersionConsumingTask {
+public abstract class DownloadTargetMappingJarTask extends DefaultMappingsTask implements TargetVersionConsumingTask, DownloadTask {
     public static final String TASK_NAME = "downloadTargetMappingsJar";
 
     @OutputFile
@@ -19,7 +21,7 @@ public abstract class DownloadTargetMappingJarTask extends DefaultMappingsTask i
     public abstract RegularFileProperty getTargetUnpickConstantsFile();
 
     public DownloadTargetMappingJarTask() {
-        super("diff");
+        super(Constants.Groups.DIFF);
     }
 
     @TaskAction

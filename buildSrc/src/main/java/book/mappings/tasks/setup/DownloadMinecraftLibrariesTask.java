@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import book.mappings.tasks.DownloadTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
@@ -26,11 +27,13 @@ import book.mappings.Constants;
 import book.mappings.tasks.DefaultMappingsTask;
 
 import org.apache.commons.io.FileUtils;
+import org.gradle.work.DisableCachingByDefault;
 import org.quiltmc.launchermeta.version.v1.DownloadableFile;
 import org.quiltmc.launchermeta.version.v1.Library;
 import org.quiltmc.launchermeta.version.v1.Version;
 
-public abstract class DownloadMinecraftLibrariesTask extends DefaultMappingsTask {
+@DisableCachingByDefault(because = "unknown")
+public abstract class DownloadMinecraftLibrariesTask extends DefaultMappingsTask implements DownloadTask {
     public static final String TASK_NAME = "downloadMinecraftLibraries";
 
     @InputFile
@@ -47,8 +50,6 @@ public abstract class DownloadMinecraftLibrariesTask extends DefaultMappingsTask
 
     public DownloadMinecraftLibrariesTask() {
         super(Constants.Groups.SETUP);
-        // TODO is this because library sources may change even on the same version?
-        this.outputsNeverUpToDate();
 
         this.getVersion().convention(this.getVersionFile().map(file -> {
             try {

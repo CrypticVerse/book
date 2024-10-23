@@ -2,6 +2,7 @@ package book.mappings.tasks.diff;
 
 import book.mappings.Constants;
 import book.mappings.tasks.DefaultMappingsTask;
+import book.mappings.tasks.DownloadTask;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import org.gradle.api.GradleException;
@@ -10,6 +11,7 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -22,7 +24,8 @@ import java.util.stream.StreamSupport;
 /**
  * @see TargetVersionConsumingTask
  */
-public abstract class DownloadTargetMetaFileTask extends DefaultMappingsTask {
+@DisableCachingByDefault(because = "output depends on a remote source that may change")
+public abstract class DownloadTargetMetaFileTask extends DefaultMappingsTask implements DownloadTask {
     public static final String TASK_NAME = "downloadTargetMetaFile";
 
     @OutputFile
@@ -51,7 +54,7 @@ public abstract class DownloadTargetMetaFileTask extends DefaultMappingsTask {
     protected abstract ObjectFactory getObjects();
 
     public DownloadTargetMetaFileTask() {
-        super("diff");
+        super(Constants.Groups.DIFF);
     }
 
     @TaskAction

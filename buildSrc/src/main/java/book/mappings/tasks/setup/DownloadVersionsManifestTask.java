@@ -2,6 +2,7 @@ package book.mappings.tasks.setup;
 
 import java.io.IOException;
 
+import book.mappings.tasks.DownloadTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -9,7 +10,7 @@ import org.gradle.api.tasks.TaskAction;
 import book.mappings.Constants;
 import book.mappings.tasks.DefaultMappingsTask;
 
-public abstract class DownloadVersionsManifestTask extends DefaultMappingsTask {
+public abstract class DownloadVersionsManifestTask extends DefaultMappingsTask implements DownloadTask {
     public static final String TASK_NAME = "downloadVersionsManifest";
 
     @OutputFile

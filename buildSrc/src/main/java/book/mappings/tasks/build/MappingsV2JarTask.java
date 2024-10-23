@@ -10,7 +10,9 @@ import org.gradle.jvm.tasks.Jar;
 
 import book.mappings.Constants;
 import book.mappings.tasks.MappingsTask;
+import org.gradle.work.DisableCachingByDefault;
 
+@DisableCachingByDefault(because = "unknown")
 public abstract class MappingsV2JarTask extends Jar implements MappingsTask {
     public static final String JAR_UNPICK_META_PATH = "extras/unpick.json";
     public static final String JAR_UNPICK_DEFINITION_PATH = "extras/definitions.unpick";
@@ -31,8 +33,6 @@ public abstract class MappingsV2JarTask extends Jar implements MappingsTask {
     @Inject
     public MappingsV2JarTask(String unpickVersion) {
         this.setGroup(Constants.Groups.BUILD_MAPPINGS);
-
-        this.outputsNeverUpToDate();
 
         this.unpickVersion = unpickVersion;
 

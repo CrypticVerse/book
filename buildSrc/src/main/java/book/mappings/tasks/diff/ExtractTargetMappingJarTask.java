@@ -1,5 +1,6 @@
 package book.mappings.tasks.diff;
 
+import book.mappings.Constants;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.RegularFileProperty;
@@ -21,7 +22,7 @@ public abstract class ExtractTargetMappingJarTask extends DefaultMappingsTask im
     private final FileTree targetJarZipTree;
 
     public ExtractTargetMappingJarTask() {
-        super("diff");
+        super(Constants.Groups.DIFF);
 
         this.targetJarZipTree = this.getProject().zipTree(this.getTargetJar());
     }

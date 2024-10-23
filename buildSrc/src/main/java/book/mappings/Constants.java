@@ -26,5 +26,6 @@ public class Constants {
         public static final String UNPICK = "unpick";
         public static final String LINT = "lint";
         public static final String UNPICK_GEN = "unpick gen";
+        public static final String DIFF = "diff";
     }
 }

@@ -734,8 +734,6 @@ public abstract class BookMappingsPlugin implements Plugin<Project> {
             final var downloadTargetMetaFile = tasks.register(
                     DownloadTargetMetaFileTask.TASK_NAME, DownloadTargetMetaFileTask.class,
                     task -> {
-                        task.outputsNeverUpToDate();
-
                         task.getMetaFile().convention(
                                 minecraftDir.map(dir ->
                                         dir.file(MAPPINGS_NAME_PREFIX + Constants.MINECRAFT_VERSION + ".json")

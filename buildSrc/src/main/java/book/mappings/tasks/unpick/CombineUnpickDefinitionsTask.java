@@ -31,6 +31,11 @@ import book.mappings.util.UnpickUtil;
 import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader;
 import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Writer;
 
+/**
+ * Combines many unpick definition files into the {@link #getOutput() output}.
+ *
+ * @see book.mappings.tasks.unpick.gen.UnpickGenTask UnpickGenTask
+ */
 public abstract class CombineUnpickDefinitionsTask extends DefaultMappingsTask {
     public static final String TASK_NAME = "combineUnpickDefinitions";
 
