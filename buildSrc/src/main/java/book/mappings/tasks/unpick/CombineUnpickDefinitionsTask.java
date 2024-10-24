@@ -37,7 +37,7 @@ import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Writer;
  * @see book.mappings.tasks.unpick.gen.UnpickGenTask UnpickGenTask
  */
 public abstract class CombineUnpickDefinitionsTask extends DefaultMappingsTask {
-    public static final String TASK_NAME = "combineUnpickDefinitions";
+    public static final String COMBINE_UNPICK_DEFINITIONS_TASK_NAME = "combineUnpickDefinitions";
 
     @InputFiles
     public abstract ConfigurableFileCollection getUnpickDefinitions();

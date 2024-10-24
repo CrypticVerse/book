@@ -31,7 +31,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public abstract class GeneratePackageInfoMappingsTask extends DefaultMappingsTask implements MappingsDirOutputtingTask {
-    public static final String TASK_NAME = "generatePackageInfoMappings";
+    public static final String GENERATE_PACKAGE_INFO_MAPPINGS_TASK_NAME = "generatePackageInfoMappings";
+
+    public static final String DEFAULT_PACKAGE_NAME = "net/minecraft/unused/packageinfo/";
 
     @Input
     public abstract Property<String> getPackageName();
@@ -40,10 +42,12 @@ public abstract class GeneratePackageInfoMappingsTask extends DefaultMappingsTas
     public abstract RegularFileProperty getInputJar();
 
     @OutputDirectory
-    protected abstract DirectoryProperty getOutputDir();
+    abstract DirectoryProperty getOutputDir();
 
     public GeneratePackageInfoMappingsTask() {
         super(Constants.Groups.BUILD_MAPPINGS);
+
+        this.getPackageName().convention(DEFAULT_PACKAGE_NAME);
 
         this.getOutputDir().convention(this.getMappingsDir().zip(this.getPackageName(), Directory::dir));
     }

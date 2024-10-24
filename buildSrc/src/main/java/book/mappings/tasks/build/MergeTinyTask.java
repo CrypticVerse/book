@@ -7,7 +7,7 @@ import java.util.function.Function;
 import org.jetbrains.annotations.VisibleForTesting;
 
 public abstract class MergeTinyTask extends AbstractHashedMergeTask {
-    public static final String TASK_NAME = "mergeTiny";
+    public static final String MERGE_TINY_TASK_NAME = "mergeTiny";
 
     @VisibleForTesting
     public static void mergeMappings(

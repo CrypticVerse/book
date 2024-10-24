@@ -19,7 +19,7 @@ import org.quiltmc.enigma.api.translation.mapping.serde.MappingParseException;
 import org.quiltmc.enigma.command.MapSpecializedMethodsCommand;
 
 public abstract class BuildMappingsTinyTask extends DefaultMappingsTask implements MappingsDirConsumingTask {
-    public static final String TASK_NAME = "buildMappingsTiny";
+    public static final String BUILD_MAPPINGS_TINY_TASK_NAME = "buildMappingsTiny";
 
     @InputFile
     public abstract RegularFileProperty getPerVersionMappingsJar();

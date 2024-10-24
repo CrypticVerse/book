@@ -7,7 +7,7 @@ import book.mappings.tasks.MappingsTask;
  * <p>
  * {@link book.mappings.BookMappingsPlugin BookMappingsPlugin} adds the
  * {@link org.gradle.api.Task#getOutputs() outputs} of all
- * {@code UnpickGenTask}s to {@value book.mappings.tasks.unpick.CombineUnpickDefinitionsTask#TASK_NAME}'s
+ * {@code UnpickGenTask}s to {@value book.mappings.tasks.unpick.CombineUnpickDefinitionsTask#COMBINE_UNPICK_DEFINITIONS_TASK_NAME}'s
  * {@link book.mappings.tasks.unpick.CombineUnpickDefinitionsTask#getUnpickDefinitions() unpickDefinitions},
  * so implementing tasks should <i>only</i> output unpick files.
  */

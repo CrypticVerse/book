@@ -1,5 +1,9 @@
+import org.gradle.api.internal.file.FileOperations
 import book.mappings.Constants
-import book.mappings.tasks.build.GenFakeSourceTask
+import book.mappings.tasks.build.IntermediaryMappingsV2JarTask
+
+import static org.gradle.api.plugins.JavaPlugin.JAVADOC_TASK_NAME
+import static book.mappings.Constants.MINECRAFT_VERSION
 
 buildscript {
 	repositories {
@@ -15,9 +19,9 @@ buildscript {
 			name "Fabric Repository"
 			url 'https://maven.fabricmc.net'
 		}
-		// remove when ASM fix is released
+		// TODO remove when ASM fix is released
 		maven {
-			url = "https://repository.ow2.org/nexus/content/repositories/snapshots/"
+			url = 'https://repository.ow2.org/nexus/content/repositories/snapshots/'
 		}
 		mavenCentral()
 		mavenLocal()
@@ -29,162 +33,116 @@ buildscript {
 }
 
 plugins {
-	id 'java' // for constants, packages, javadoc
 	id 'maven-publish'
-	id 'com.diffplug.spotless' version '6.25.0'
-	id "book-mappings"
+	id 'book-mappings'
+	alias libs.plugins.spotless
 }
 
-bookMappings {
-	mappingsDir = file("mappings/")
+final USE_SNAPSHOT_HASHES = false
 
-	enigmaProfileConfig = file("enigma/enigma_profile.json")
-
-	unpickMeta = file("unpick/unpick.json")
-}
-
-combineUnpickDefinitions {
-	unpickDefinitions.from 'unpick/definitions/'
-}
-
-def USE_SNAPSHOT_HASHES = false
-
-def minecraft_version = Constants.MINECRAFT_VERSION
-
-def ENV = System.getenv()
+final ENV = System.getenv()
 
 version = Constants.MAPPINGS_VERSION
 
-if (ENV.BRANCH_NAME) {
-	def branch = ENV.BRANCH_NAME.substring(ENV.BRANCH_NAME.lastIndexOf('/') + 1)
-	if (minecraft_version != branch) {
-		throw new IllegalStateException("Branch name (${branch}) does not match the mc version (${minecraft_version})")
-	}
-}
-
-repositories {
-	maven {
-		name "Mojang"
-		url 'https://libraries.minecraft.net/'
-	}
-	mavenCentral()
-	maven {
-		name "Quilt Repository"
-		url "https://maven.quiltmc.org/repository/release"
-	}
-	maven {
-		name "Notebook"
-		url "https://bookkeepersmc.github.io/m2/"
-	}
-	maven {
-		name "Fabric Repository"
-		url 'https://maven.fabricmc.net'
-	}
-	// remove when ASM fix is released
-	maven {
-		url = "https://repository.ow2.org/nexus/content/repositories/snapshots/"
-	}
-	mavenLocal()
-}
-
-configurations {
-	javadocClasspath
-	unpick
-}
-
-dependencies {
-	enigmaRuntime(libs.enigma.swing)
-	enigmaRuntime(libs.enigma.plugin)
-	// NOT NL here for @net.fabricmc annotations
-	javadocClasspath(libs.quilt.loader)
-	javadocClasspath(libs.jetbrains.annotations)
-	javadocClasspath(libs.jsr305) // for some other jsr annotations
-	unpick(libs.unpick.cli)
-	hashed "org.quiltmc:hashed:${minecraft_version}${USE_SNAPSHOT_HASHES ? "-SNAPSHOT" : ""}"
-	intermediary "net.fabricmc:intermediary:${minecraft_version}:v2"
-}
-
-tasks.build.dependsOn "compressTiny", "tinyJar", "v2UnmergedMappingsJar", "v2MergedMappingsJar"
-
-java {
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.encoding = "UTF-8"
-	it.options.release = 21
-}
-
 sourceSets {
+	// for constantsJar and sourcesJar input
 	constants
-	packageDocs // package info files
+	// package info files, for javadoc input
+	packageDocs
+	// for javadoc input
 	doclet
 }
 
-spotless {
-	java {
-		licenseHeaderFile(rootProject.file("HEADER"))
-		targetExclude("src/doclet/**/*.java")
-	}
+bookMappings {
+	mappingsDir = file('mappings/')
+
+	enigmaProfileConfig = file('enigma/enigma_profile.json')
+
+	unpickMeta = file('unpick/unpick.json')
 }
 
-// Its artifact collides with the `tinyJar` one, just disable it since it isn't used either way
-tasks.jar.enabled = false
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-	archiveClassifier = "sources"
-	from sourceSets.constants.allSource
+tasks.combineUnpickDefinitions {
+	// add project's static unpick definitions
+	unpickDefinitions.from 'unpick/definitions/'
 }
+
+tasks.downloadDictionaryFile {
+	final revision = libs.versions.dictionary.revision.get()
+	url = "https://raw.githubusercontent.com/ix0rai/qm-base-allowed-wordlist/${revision}/allowed_english_words.txt"
+
+	// TODO does this really need the revision in the name? If not this could go in BookMappingsPlugin
+	//  Also this seems like something that should go in build/ so it can be cleaned
+	dest = project.file(".gradle/lint/dictionary/${revision}.txt")
+}
+
+tasks.sourcesJar {
+	sources.from sourceSets.constants.allSource
+}
+
+tasks.constantsJar {
+	constants.from sourceSets.constants.output
+}
+
 // Only build jars for package infos if we need to actually expose stuff like annotation in the future.
 
-build.dependsOn constantsJar, generatePackageInfoMappings
+tasks.build.dependsOn constantsJar, generatePackageInfoMappings,
+	compressTiny, tinyJar, v2UnmergedMappingsJar, v2MergedMappingsJar
 
-javadoc {
-	dependsOn genFakeSource
-	dependsOn downloadMinecraftLibraries
-	dependsOn docletClasses // Needed for javadoc to find the doclet classes.
-	group = "javadoc generation"
-	outputs.upToDateWhen { false }
-	destinationDir = file("${buildDir}/docs/${project.version}")
+final FileOperations fileOperations = project.fileOperations
+
+// configure lazily because we get buildDirectory
+tasks.named(JAVADOC_TASK_NAME, Javadoc) {
+	// Needed for javadoc to find the doclet classes.
+	dependsOn docletClasses
+
+	// TODO why?
+	outputs.doNotCacheIf("unknown", Specs.satisfyAll())
+
+	destinationDir = layout.buildDirectory.get().dir('docs').dir(project.version.toString()).getAsFile()
 	def docletResources = sourceSets.doclet.resources.asFileTree
 
+	// Failing on error is important to ensure that a Javadoc jar is available.
 	failOnError = false
 	maxMemory = '2G'
 
-	// verbose = true // enable to debug
+	// enable to debug
+	final debug = false
+	verbose = debug
 	options {
-		// verbose() // enable to debug
-		source = "21"
+		if (debug) {
+			verbose()
+		}
+		source = '21'
 		encoding = 'UTF-8'
 		charSet = 'UTF-8'
 		memberLevel = JavadocMemberLevel.PRIVATE
 		splitIndex true
 		tags(
-				'apiNote:a:API Note:',
-				'implSpec:a:Implementation Requirements:',
-				'implNote:a:Implementation Note:'
+			'apiNote:a:API Note:',
+			'implSpec:a:Implementation Requirements:',
+			'implNote:a:Implementation Note:'
 		)
-		taglets "book.mappings.taglet.MappingTaglet"
+		taglets 'quilt.internal.taglet.MappingTaglet'
 		// taglet path, header, extra stylesheet settings deferred
 		it.use()
 
-		addBooleanOption "-allow-script-in-comments", true
+		addBooleanOption '-allow-script-in-comments', true
 		links(
-				"https://javadoc.io/doc/com.google.guava/guava/${libs.versions.guava.get()}/",
-				"https://javadoc.io/doc/com.google.code.gson/gson/${project.gson}/",
-				"https://javadoc.io/doc/org.jetbrains/annotations/${libs.versions.jetbrains.annotations.get()}/",
-				"https://javadoc.io/doc/com.google.code.findbugs/jsr305/${libs.versions.jsr305.get()}/",
-				"https://javadoc.io/doc/org.apache.commons/commons-compress/${project.commons_compress}/",
-				"https://javadoc.io/doc/io.netty/netty-all/${project.netty}/",
-				'https://javadoc.lwjgl.org/',
-				'https://logging.apache.org/log4j/2.x/javadoc/log4j-api/',
-				'https://fastutil.di.unimi.it/docs/',
-				"https://commons.apache.org/proper/commons-logging/javadocs/api-release/",
-				"https://commons.apache.org/proper/commons-lang/javadocs/api-release/",
-				"https://commons.apache.org/proper/commons-io/apidocs/",
-				"https://commons.apache.org/proper/commons-codec/archives/${project.commons_codec}/apidocs/",
-				"https://docs.oracle.com/en/java/javase/${project.java}/docs/api/"
+			"https://javadoc.io/doc/com.google.guava/guava/${libs.versions.guava.get()}/",
+			"https://javadoc.io/doc/com.google.code.gson/gson/${project.gson}/",
+			"https://javadoc.io/doc/org.jetbrains/annotations/${libs.versions.jetbrains.annotations.get()}/",
+			"https://javadoc.io/doc/com.google.code.findbugs/jsr305/${libs.versions.jsr305.get()}/",
+			"https://javadoc.io/doc/org.apache.commons/commons-compress/${project.commons_compress}/",
+			"https://javadoc.io/doc/io.netty/netty-all/${project.netty}/",
+			'https://javadoc.lwjgl.org/',
+			'https://logging.apache.org/log4j/2.x/javadoc/log4j-api/',
+			'https://fastutil.di.unimi.it/docs/',
+			'https://commons.apache.org/proper/commons-logging/javadocs/api-release/',
+			'https://commons.apache.org/proper/commons-lang/javadocs/api-release/',
+			'https://commons.apache.org/proper/commons-io/apidocs/',
+			"https://commons.apache.org/proper/commons-codec/archives/${project.commons_codec}/apidocs/",
+			"https://javadoc.quiltmc.org/quilt-loader/${libs.versions.loader.get()}/",
+			"https://docs.oracle.com/en/java/javase/${project.java}/docs/api/"
 		)
 		// https://docs.oracle.com/en/java/javase/21/docs/specs/man/javadoc.html#additional-options-provided-by-the-standard-doclet
 		addBooleanOption 'Xdoclint:html', true
@@ -193,54 +151,91 @@ javadoc {
 		addBooleanOption 'Xdoclint:accessibility', true
 		addStringOption '-notimestamp'
 	}
-	source fileTree(tasks.named(GenFakeSourceTask.TASK_NAME, GenFakeSourceTask).flatMap(GenFakeSourceTask::getOutput)) +
-		sourceSets.constants.allJava + sourceSets.packageDocs.allJava
-	classpath = configurations.javadocClasspath + downloadMinecraftLibraries.outputs.files.asFileTree + mapNamedJar.outputs.files.asFileTree
 
-	doLast {
-		project.copy {
-			from docletResources
-			include "copy_on_click.js"
-			into javadoc.outputDirectory
-		}
-	}
+	source sourceSets.constants.allJava + sourceSets.packageDocs.allJava
 
 	doFirst {
 		// lazy setting
 		options {
 			tagletPath sourceSets.doclet.output.classesDirs.files.toList()
 			header docletResources.filter { it.name == 'javadoc_header.txt' }.singleFile.text.trim()
-			addFileOption "-add-stylesheet", docletResources.filter { it.name == 'style.css' }.singleFile
+			addFileOption '-add-stylesheet', docletResources.filter { it.name == 'style.css' }.singleFile
+		}
+	}
+
+	doLast {
+		fileOperations.copy {
+			it.from docletResources
+			it.include 'copy_on_click.js'
+			it.into destinationDir
 		}
 	}
 }
 
-task javadocJar(type: Jar, dependsOn: ["javadoc"]) {
-	group = "javadoc generation"
-
-	from javadoc.destinationDir
-
-	archiveVersion.set Constants.MAPPINGS_VERSION
-	archiveClassifier = 'javadoc'
+if (ENV.BRANCH_NAME) {
+	def branch = ENV.BRANCH_NAME.substring(ENV.BRANCH_NAME.lastIndexOf('/') + 1)
+	if (MINECRAFT_VERSION != branch) {
+		throw new IllegalStateException("Branch name (${branch}) does not match the mc version (${MINECRAFT_VERSION})")
+	}
 }
 
-downloadDictionaryFile {
-	final revision = libs.versions.dictionary.revision.get()
-	// TODO this should probably be published to quilt maven, see #442
-	url = "https://raw.githubusercontent.com/ix0rai/qm-base-allowed-wordlist/${revision}/allowed_english_words.txt"
-
-	// TODO does this really need the revision in the name? If not this could go in QuiltMappingsPlugin
-	//  Also this seems like something that should go in build/ so it can be cleaned
-	output = project.file(".gradle/lint/dictionary/${revision}.txt")
+repositories {
+	maven {
+		name 'Mojang'
+		url 'https://libraries.minecraft.net/'
+	}
+	mavenCentral()
+	maven {
+		name 'Quilt Repository'
+		url 'https://maven.quiltmc.org/repository/release'
+	}
+	maven {
+		 name = "bookkeepersmc"
+		 url = "https://maven.bookkeepersmc.com"
+	}
+	maven {
+		name 'Fabric Repository'
+		url 'https://maven.fabricmc.net'
+	}
+	maven {
+		name 'Quilt Snapshot Repository'
+		url 'https://maven.quiltmc.org/repository/snapshot'
+	}
+	// TODO remove when ASM fix is released
+	maven {
+		url = 'https://repository.ow2.org/nexus/content/repositories/snapshots/'
+	}
+	mavenLocal()
 }
 
-// mappingLint {
-// 	dependsOn mapPerVersionMappingsJar
-// 	mappingDirectory = file("mappings")
-// 	jarFile = bookMappings.fileConstants.perVersionMappingsJar
-// }
+dependencies {
+	enigmaRuntime(libs.enigma.swing)
+	enigmaRuntime(libs.enigma.plugin)
+	javadocClasspath(libs.quilt.loader)
+	javadocClasspath(libs.jetbrains.annotations)
+	javadocClasspath(libs.jsr305) // for some other jsr annotations
+	unpick(libs.unpick.cli)
+	hashed "org.quiltmc:hashed:${MINECRAFT_VERSION}${USE_SNAPSHOT_HASHES ? "-SNAPSHOT" : ""}"
+	intermediary "net.fabricmc:intermediary:${MINECRAFT_VERSION}:v2"
+}
 
-check.dependsOn mappingLint
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = 'UTF-8'
+	it.options.release = 21
+}
+
+spotless {
+	java {
+		licenseHeaderFile(rootProject.file("HEADER"))
+		removeUnusedImports()
+		targetExclude("src/**")
+	}
+}
 
 publishing {
 	publications {
@@ -250,18 +245,18 @@ publishing {
 			version Constants.MAPPINGS_VERSION
 
 			artifact(compressTiny.compressedTiny) {
-				classifier "tiny"
+				classifier 'tiny'
 				builtBy compressTiny
 			}
 			artifact(tinyJar)
 			artifact(v2UnmergedMappingsJar) {
-				classifier "v2"
+				classifier 'v2'
 			}
 			artifact(v2MergedMappingsJar) {
-				classifier "mergedv2"
+				classifier 'mergedv2'
 			}
 			artifact(constantsJar) {
-				classifier "constants"
+				classifier 'constants'
 			}
 			artifact sourcesJar
 			artifact javadocJar
@@ -269,18 +264,31 @@ publishing {
 			// See below the publishing block for intermediary artifact publishing
 		}
 	}
+
 	repositories {
-		maven {
-			url = ENV.MAVEN_URL
-			credentials {
-				username = ENV.MAVEN_USER
-				password = ENV.MAVEN_PASSWORD
+		if (ENV.MAVEN_URL) {
+			maven {
+				url ENV.MAVEN_URL
+				credentials {
+					username ENV.MAVEN_USERNAME
+					password ENV.MAVEN_PASSWORD
+				}
+			}
+		} else if (USE_SNAPSHOT_HASHES && ENV.SNAPSHOTS_URL) {
+			maven {
+				url = ENV.SNAPSHOTS_URL
+
+				credentials {
+					username = ENV.SNAPSHOTS_USERNAME
+					password = ENV.SNAPSHOTS_PASSWORD
+				}
 			}
 		}
+		mavenLocal()
 	}
 }
 
-tasks.withType(AbstractPublishToMaven).all { AbstractPublishToMaven t ->
+tasks.withType(AbstractPublishToMaven).configureEach { AbstractPublishToMaven t ->
 	// Won't run if checkIntermediaryMappings returns false
 	dependsOn buildIntermediary
 
@@ -295,8 +303,8 @@ tasks.withType(AbstractPublishToMaven).all { AbstractPublishToMaven t ->
 				}
 			}
 
-			addArtifact(intermediaryV2MappingsJar, "intermediary-v2")
-			addArtifact(intermediaryV2MergedMappingsJar, "intermediary-mergedv2")
+			addArtifact(intermediaryV2MappingsJar, IntermediaryMappingsV2JarTask.CLASSIFIER)
+			addArtifact(intermediaryV2MergedMappingsJar, IntermediaryMappingsV2JarTask.MERGED_CLASSIFIER)
 		}
 	}
 }

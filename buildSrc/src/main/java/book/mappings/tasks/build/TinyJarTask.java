@@ -8,7 +8,7 @@ import book.mappings.Constants;
 import book.mappings.tasks.MappingsTask;
 
 public abstract class TinyJarTask extends Jar implements MappingsTask {
-    public static final String TASK_NAME = "tinyJar";
+    public static final String TINY_JAR_TASK_NAME = "tinyJar";
 
     public static final String JAR_MAPPINGS_PATH = "mappings/mappings.tiny";
 
@@ -17,6 +17,7 @@ public abstract class TinyJarTask extends Jar implements MappingsTask {
 
     public TinyJarTask() {
         this.setGroup(Constants.Groups.BUILD_MAPPINGS);
+
         this.from(this.getMappings()).rename(original -> JAR_MAPPINGS_PATH);
     }
 }

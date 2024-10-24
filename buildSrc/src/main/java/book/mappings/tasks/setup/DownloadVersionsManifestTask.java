@@ -1,32 +1,26 @@
 package book.mappings.tasks.setup;
 
-import java.io.IOException;
-
-import book.mappings.tasks.DownloadTask;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import book.mappings.tasks.SimpleDownloadTask;
+import book.mappings.util.SerializableVersionEntry;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.provider.Provider;
 
 import book.mappings.Constants;
-import book.mappings.tasks.DefaultMappingsTask;
 
-public abstract class DownloadVersionsManifestTask extends DefaultMappingsTask implements DownloadTask {
-    public static final String TASK_NAME = "downloadVersionsManifest";
+public abstract class DownloadVersionsManifestTask extends SimpleDownloadTask {
+    public static final String DOWNLOAD_VERSIONS_MANIFEST_TASK_NAME = "downloadVersionsManifest";
 
-    @OutputFile
-    public abstract RegularFileProperty getManifestFile();
+    public Provider<SerializableVersionEntry> provideVersionEntry() {
+        return this.getDest()
+                .map(RegularFile::getAsFile)
+                .map(SerializableVersionEntry::of);
+    }
 
     public DownloadVersionsManifestTask() {
         super(Constants.Groups.SETUP);
-    }
 
-    @TaskAction
-    public void downloadVersionsManifestTask() throws IOException {
-        this.getLogger().lifecycle(":downloading minecraft versions manifest");
-        this.startDownload()
-                .src("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
-                .dest(this.getManifestFile().get().getAsFile())
-                .overwrite(true)
-                .download();
+        this.getPreDownloadLifecycle().convention(":downloading minecraft versions manifest");
+
+        this.getUrl().convention("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
     }
 }

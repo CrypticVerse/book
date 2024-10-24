@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.gradle.api.tasks.TaskAction;
 
 public abstract class DecompileVineflowerTask extends DecompileTask {
-    public static final String TASK_NAME = "decompileVineflower";
+    public static final String DECOMPILE_VINEFLOWER_TASK_NAME = "decompileVineflower";
 
     public DecompileVineflowerTask() {
         this.getDecompiler().set(Decompilers.VINEFLOWER);

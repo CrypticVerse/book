@@ -7,7 +7,7 @@ import book.mappings.tasks.decompile.DecompileVineflowerTask;
 import org.gradle.api.tasks.TaskAction;
 
 public abstract class GenFakeSourceTask extends DecompileVineflowerTask {
-    public static final String TASK_NAME = "genFakeSource";
+    public static final String GEN_FAKE_SOURCE_TASK_NAME = "genFakeSource";
 
     public GenFakeSourceTask() {
         this.getDecompilerOptions().putAll(Map.of(

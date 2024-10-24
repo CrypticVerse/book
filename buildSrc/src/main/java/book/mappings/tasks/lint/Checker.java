@@ -53,7 +53,7 @@ public interface Checker<E extends Entry<?>> extends Serializable {
     default Checker<Entry<?>> withTypeGuard(Class<E> entryType) {
         return (entry, mapping, access, errorReporter) -> {
             if (entryType.isInstance(entry)) {
-                check(entryType.cast(entry), mapping, access, errorReporter);
+                this.check(entryType.cast(entry), mapping, access, errorReporter);
             }
         };
     }

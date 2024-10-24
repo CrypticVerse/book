@@ -1,39 +1,15 @@
 package book.mappings.tasks.setup;
 
-import java.io.IOException;
-
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import book.mappings.tasks.ExtractSingleZippedFileTask;
 
 import book.mappings.Constants;
-import book.mappings.tasks.DefaultMappingsTask;
 
-import org.apache.commons.io.FileUtils;
+public abstract class ExtractServerJarTask extends ExtractSingleZippedFileTask {
+    public static final String EXTRACT_SERVER_JAR_TASK_NAME = "extractServerJar";
 
-public abstract class ExtractServerJarTask extends DefaultMappingsTask {
-    public static final String TASK_NAME = "extractServerJar";
-
-    @InputFile
-    public abstract RegularFileProperty getServerBootstrapJar();
-
-    @OutputFile
-    public abstract RegularFileProperty getServerJar();
+    public static final String SERVER_JAR_PATTERN = "META-INF/versions/*/server-*.jar";
 
     public ExtractServerJarTask() {
-        super(Constants.Groups.SETUP);
-    }
-
-    @TaskAction
-    public void extractServerJar() throws IOException {
-        FileUtils.copyFile(
-                // TODO eliminate project access in task action
-                this.getProject()
-                        .zipTree(this.getServerBootstrapJar().get())
-                        .matching(patternFilterable -> patternFilterable.include("META-INF/versions/*/server-*.jar"))
-                        .getSingleFile(),
-                this.getServerJar().get().getAsFile()
-        );
+        super(Constants.Groups.SETUP, filterable -> filterable.include(SERVER_JAR_PATTERN));
     }
 }

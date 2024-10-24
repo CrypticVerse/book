@@ -1,5 +1,6 @@
 package book.mappings.tasks;
 
+import book.mappings.util.EnigmaProfileService;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
@@ -10,15 +11,11 @@ import org.gradle.api.tasks.Internal;
 import org.quiltmc.enigma.api.EnigmaProfile;
 
 public interface EnigmaProfileConsumingTask extends MappingsTask {
-    @Internal(
-            "An EnigmaProfile cannot be fingerprinted. " +
-                    "Up-to-date-ness is ensured by getSimpleTypeFieldNamesFiles and its source, " +
-                    "MappingsExtension::getEnigmaProfileFile."
-    )
-    Property<EnigmaProfile> getEnigmaProfile();
+    @Internal("@ServiceReference is @Incubating")
+    Property<EnigmaProfileService> getEnigmaProfileService();
 
     /**
-     * Don't parse this to create an {@link EnigmaProfile}, use {@link #getEnigmaProfile() enigmaProfile} instead.
+     * Don't parse this to create an {@link EnigmaProfile}, use {@link #getEnigmaProfileService() enigmaProfile} instead.
      * <p>
      * This is exposed so it can be passed to external processes.
      */
@@ -27,7 +24,7 @@ public interface EnigmaProfileConsumingTask extends MappingsTask {
 
     /**
      * Holds any {@code simple_type_field_names} configuration files obtained from the
-     * {@link #getEnigmaProfile() EnigmaProfile}.
+     * {@link #getEnigmaProfileService() EnigmaProfile}.
      * <p>
      * {@link EnigmaProfileConsumingTask}s may not access these files directly, but they affect enigma's behavior,
      * so they must be considered for up-to-date checks.

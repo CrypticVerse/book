@@ -1,36 +1,13 @@
 package book.mappings.tasks.lint;
 
-import java.io.IOException;
-
-import book.mappings.tasks.DownloadTask;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import book.mappings.tasks.SimpleDownloadTask;
 
 import book.mappings.Constants;
-import book.mappings.tasks.DefaultMappingsTask;
 
-public abstract class DownloadDictionaryFileTask extends DefaultMappingsTask implements DownloadTask {
-    public static final String TASK_NAME = "downloadDictionaryFile";
-
-    @Input
-    public abstract Property<String> getUrl();
-
-    @OutputFile
-    public abstract RegularFileProperty getOutput();
+public abstract class DownloadDictionaryFileTask extends SimpleDownloadTask {
+    public static final String DOWNLOAD_DICTIONARY_FILE_TASK_NAME = "downloadDictionaryFile";
 
     public DownloadDictionaryFileTask() {
         super(Constants.Groups.LINT);
-    }
-
-    @TaskAction
-    public void downloadDictionaryFile() throws IOException {
-        this.startDownload()
-                .src(this.getUrl().get())
-                .overwrite(false)
-                .dest(this.getOutput().get().getAsFile())
-                .download();
     }
 }

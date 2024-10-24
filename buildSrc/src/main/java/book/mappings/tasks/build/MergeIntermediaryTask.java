@@ -18,7 +18,7 @@ import net.fabricmc.mappingio.MappingVisitor;
 import net.fabricmc.mappingio.adapter.MappingDstNsReorder;
 
 public abstract class MergeIntermediaryTask extends AbstractTinyMergeTask implements IntermediaryDependantTask {
-    public static final String TASK_NAME = "mergeIntermediary";
+    public static final String MERGE_INTERMEDIARY_TASK_NAME = "mergeIntermediary";
 
     @InputFile
     public abstract RegularFileProperty getMergedTinyMappings();

@@ -2,14 +2,11 @@ package book.mappings.tasks.setup;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
-import book.mappings.tasks.DownloadTask;
-import org.gradle.api.GradleException;
+import book.mappings.tasks.VersionDownloadInfoConsumingTask;
+import book.mappings.util.DownloadUtil;
+import book.mappings.util.VersionDownloadInfo;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
@@ -19,17 +16,9 @@ import book.mappings.tasks.DefaultMappingsTask;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
-import org.quiltmc.launchermeta.version.v1.Downloads;
-import org.quiltmc.launchermeta.version.v1.Version;
 
-public abstract class DownloadMinecraftJarsTask extends DefaultMappingsTask implements DownloadTask {
-    public static final String TASK_NAME = "downloadMinecraftJars";
-
-    @InputFile
-    public abstract RegularFileProperty getVersionFile();
-
-    @Internal("Fingerprinting is handled by getVersionFile")
-    protected abstract Property<Version> getVersion();
+public abstract class DownloadMinecraftJarsTask extends DefaultMappingsTask implements VersionDownloadInfoConsumingTask {
+    public static final String DOWNLOAD_MINECRAFT_JARS_TASK_NAME = "downloadMinecraftJars";
 
     @OutputFile
     public abstract RegularFileProperty getClientJar();
@@ -40,26 +29,23 @@ public abstract class DownloadMinecraftJarsTask extends DefaultMappingsTask impl
     public DownloadMinecraftJarsTask() {
         super(Constants.Groups.SETUP);
 
-        this.getVersion().convention(this.getVersionFile().map(file -> {
-            try {
-                return Version.fromReader(java.nio.file.Files.newBufferedReader(
-                        file.getAsFile().toPath(),
-                        StandardCharsets.UTF_8
-                ));
-            } catch (IOException e) {
-                throw new GradleException("Failed to read version file", e);
-            }
-        }));
+        // TODO I'm not sure that this is necessary
+        //  VersionDownloadInfoConsumingTasks indirectly depend on
+        //  DownloadVersionManifestFileTask which has @DisableCachingByDefault.
+        //  I'm not sure if gradle considers output files to have been updated when they're overwritten with
+        //  the same content.
+        //  If not, this can be eliminated.
+        //  If so, we should do a check like this in DownloadVersionManifestFileTask so checks like this are obsolete.
 
         this.getOutputs().upToDateWhen(unused -> {
             try {
                 final File clientJar = this.getClientJar().get().getAsFile();
                 final File serverBootstrapJar = this.getServerBootstrapJar().get().getAsFile();
-                final Downloads versionDownloads = this.getVersion().get().getDownloads();
+                final VersionDownloadInfo info = this.getVersionDownloadInfo().get();
 
                 return clientJar.exists() && serverBootstrapJar.exists()
-                        && validateChecksum(clientJar, versionDownloads.getClient().getSha1())
-                        && validateChecksum(serverBootstrapJar, versionDownloads.getServer().orElseThrow().getSha1());
+                        && validateChecksum(clientJar, info.getClient().getSha1())
+                        && validateChecksum(serverBootstrapJar, info.getServer().getSha1());
             } catch (Exception e) {
                 return false;
             }
@@ -67,22 +53,24 @@ public abstract class DownloadMinecraftJarsTask extends DefaultMappingsTask impl
     }
 
     @TaskAction
-    public void downloadMinecraftJars() throws IOException {
+    public void download() {
         this.getLogger().lifecycle(":downloading minecraft jars");
 
-        final Downloads versionDownloads = this.getVersion().get().getDownloads();
+        final VersionDownloadInfo info = this.getVersionDownloadInfo().get();
 
-        this.startDownload()
-                .src(versionDownloads.getClient().getUrl())
-                .dest(this.getClientJar().get().getAsFile())
-                .overwrite(false)
-                .download();
+        DownloadUtil.download(
+                info.getClient().getUrl(),
+                this.getClientJar().get().getAsFile(),
+                false,
+                this.getLogger()
+        );
 
-        this.startDownload()
-                .src(versionDownloads.getServer().orElseThrow().getUrl())
-                .dest(this.getServerBootstrapJar().get().getAsFile())
-                .overwrite(false)
-                .download();
+        DownloadUtil.download(
+                info.getServer().getUrl(),
+                this.getServerBootstrapJar().get().getAsFile(),
+                false,
+                this.getLogger()
+        );
     }
 
     @SuppressWarnings("deprecation")
